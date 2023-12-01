@@ -11,7 +11,8 @@ import {getStoredToken, storeToken} from "@storage/storageAuthToken";
 interface IContextProps {
     user: UserDTO,
     signIn: (email: string, password: string) => Promise<void>,
-    signOut: ()=> Promise<void>
+    signOut: ()=> Promise<void>,
+    updateUserProfile: (userUpdated: UserDTO) => Promise<void>
 }
 
 interface AuthContextProviderProps{
@@ -44,6 +45,15 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
     React.useEffect(()=>{
         loadUserData();
     }, [])
+
+    async function updateUserProfile(userUpdated: UserDTO){
+        try {
+            setUser(userUpdated)
+            await storeUser(userUpdated)
+        }catch(e){
+            throw e
+        }
+    }
     async function loadUserData(){
         const user = await getStoredUser()
         const token = await getStoredToken()
@@ -57,8 +67,7 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
 
         try{
             const {data} = await Api.post('/sessions', {email, password})
-            // console.log("=>")
-            // console.log(data)
+
             if(data.user && data.token){
                 await storageUserAndToken(data.user, data.token)
                 await userAndTokenUpdate(data.user, data.token)
@@ -76,7 +85,7 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
     }
 
     return (
-        <AuthContext.Provider value={{user, signIn, signOut}}>
+        <AuthContext.Provider value={{user, signIn, signOut, updateUserProfile}}>
             {children}
         </AuthContext.Provider>
     );

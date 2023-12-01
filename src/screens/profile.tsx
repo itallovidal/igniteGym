@@ -1,14 +1,14 @@
 import React from 'react';
-import { Center, Heading, ScrollView, Skeleton, Text, VStack, useToast} from "native-base";
+import {Center, Heading, ScrollView, Skeleton, Text, useToast, VStack} from "native-base";
 import ScreenHeader from "@components/screenHeader";
 import UserPhoto from "@components/UserPhoto";
-import {TouchableOpacity, Alert} from "react-native";
+import {TouchableOpacity} from "react-native";
 import Input from "@components/input";
 import Button from "@components/button";
 
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker'
-import {useForm, Controller} from "react-hook-form";
+import {Controller, useForm} from "react-hook-form";
 import useAuth from "@hooks/useAuth";
 
 import z from 'zod'
@@ -45,7 +45,7 @@ function Profile() {
     const [userPhoto, setUserPhoto] = React.useState("")
     const toast = useToast()
     setTimeout(()=> setIsPhotoLoaded(true), 2000)
-    const {user} = useAuth()
+    const {user, updateUserProfile} = useAuth()
     const {control, handleSubmit, formState: {errors}} = useForm<TFormDataProps>({
         defaultValues: {
             name: user.name,
@@ -85,7 +85,13 @@ function Profile() {
     async function handleProfileUpdate(data : TFormDataProps){
         try {
             setIsLoading(true)
+
+            const userUpdated = user
+            userUpdated.name = data.name
+
             await Api.put('/users', data)
+
+            await updateUserProfile(userUpdated)
 
             toast.show({
                 title: "Atualizado com sucesso!",
