@@ -6,6 +6,7 @@ import useAuth from "@hooks/useAuth";
 import placeholderProfile from '../assets/userPhotoDefault.png'
 import {useContext} from "react";
 import {AuthContext} from "@contexts/authContext";
+import {Api} from "@utils/axiosConfig";
 
 function HomeHeader() {
     const {user} = useAuth()
@@ -14,7 +15,8 @@ function HomeHeader() {
     return (
         <HStack bg={"gray.600"} pt={16} pb={5} px={8} alignItems={"center"}>
             <UserPhoto size={16}
-                       source={ user.avatar ? {uri: "https://github.com/itallovidal.png"} : placeholderProfile  }
+                       source={ user.avatar
+                           ? {uri: `${Api.defaults.baseURL}/avatar/${user.avatar}`} : placeholderProfile  }
                        alt={""}
                        marginRight={5}
             />

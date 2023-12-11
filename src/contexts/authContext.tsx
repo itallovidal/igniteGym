@@ -32,10 +32,10 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
         }
 
     }
-    async function storageUserAndToken(user: UserDTO, token: string){
+    async function storageUserAndToken(user: UserDTO, token: string, refreshToken: string){
         try {
             await storeUser(user)
-            await storeToken(token)
+            await storeToken(token, refreshToken)
         }catch (error)
         {
             throw error
@@ -45,6 +45,14 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
     React.useEffect(()=>{
         loadUserData();
     }, [])
+
+    React.useEffect(()=>{
+        const subscribe = Api.registerInterceptTokenManager(signOut)
+
+        return ()=>{
+            subscribe()
+        }
+    }, [signOut])
 
     async function updateUserProfile(userUpdated: UserDTO){
         try {
@@ -56,9 +64,9 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
     }
     async function loadUserData(){
         const user = await getStoredUser()
-        const token = await getStoredToken()
+        const { token } = await getStoredToken()
 
-        if(token && user){
+        if(token && user ){
             await userAndTokenUpdate(user, token)
         }
     }
@@ -68,8 +76,8 @@ function AuthContextProvider({children}: AuthContextProviderProps) {
         try{
             const {data} = await Api.post('/sessions', {email, password})
 
-            if(data.user && data.token){
-                await storageUserAndToken(data.user, data.token)
+            if(data.user && data.token && data.refreshToken){
+                await storageUserAndToken(data.user, data.token, data.refreshToken)
                 await userAndTokenUpdate(data.user, data.token)
             }
         }catch (e){

@@ -6,6 +6,9 @@ import {TouchableOpacity} from "react-native";
 import Input from "@components/input";
 import Button from "@components/button";
 
+// @ts-ignore
+import mime from 'mime'
+
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker'
 import {Controller, useForm} from "react-hook-form";
@@ -15,6 +18,7 @@ import z from 'zod'
 import {zodResolver} from "@hookform/resolvers/zod";
 import {AppError} from "@utils/AppError";
 import {Api} from "@utils/axiosConfig";
+import placeholderProfile from "@assets/userPhotoDefault.png";
 
 const schema = z.object({
     name: z.string({
@@ -67,8 +71,9 @@ function Profile() {
 
         if(selectedPhoto.assets[0].uri){
             const photoInfo = await FileSystem.getInfoAsync(selectedPhoto.assets[0].uri)
+            console.log(photoInfo)
 
-            if(photoInfo.exists && (photoInfo.size / 1024 * 2) > 5){
+            if(photoInfo.exists && (photoInfo.size / 1024 / 1024) > 5){
                 toast.show({
                     title: "Ops, imagem muito grande!",
                     placement: "top",
@@ -77,9 +82,38 @@ function Profile() {
                 return
             }
 
-            setUserPhoto(selectedPhoto.assets[0].uri)
-        }
+            // setUserPhoto(selectedPhoto.assets[0].uri)
+            // console.log(selectedPhoto)
 
+            const fileExtension = selectedPhoto.assets[0].uri.split('.').pop()
+            const photoFile = {
+                name: `${user.name}.${fileExtension}`.toLowerCase(),
+                uri: selectedPhoto.assets[0].uri,
+                type: mime.getType(`${selectedPhoto.assets[0].uri}`)
+            } as any
+
+            console.log(photoFile)
+
+            const userPhotoUploadForm = new FormData()
+            userPhotoUploadForm.append('avatar', photoFile)
+
+
+            const avatarUpdatedResponse = await Api.patch('/users/avatar', userPhotoUploadForm, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+
+                }
+            })
+
+            user.avatar = avatarUpdatedResponse.data.avatar
+            await updateUserProfile(user)
+
+            toast.show({
+                title: "Foto Atualizada!",
+                placement: "top",
+                bgColor: "green.500"
+            })
+        }
     }
 
     async function handleProfileUpdate(data : TFormDataProps){
@@ -129,7 +163,8 @@ function Profile() {
                     >
                         <UserPhoto size={32}
                                    alt={""}
-                                   source={{uri: userPhoto}}
+                                   source={ user.avatar
+                                       ? {uri: `${Api.defaults.baseURL}/avatar/${user.avatar}`} : placeholderProfile  }
                         />
                     </Skeleton>
 
