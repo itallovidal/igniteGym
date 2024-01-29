@@ -7,7 +7,8 @@ const { Navigator, Screen } = createNativeStackNavigator<TAuthRoutes>()
 
 function AuthRoutes() {
     return (
-        <Navigator screenOptions={{headerShown: false}}>
+        <Navigator screenOptions={{headerShown: false,
+                                    animation: "slide_from_left"}}>
             <Screen name={'signIn'}
                     component={SignIn}
             />
